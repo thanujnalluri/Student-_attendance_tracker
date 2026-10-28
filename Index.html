@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Attendance Tracker</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f5ff;
+  padding: 15px;
+}
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+}
+h1 {
+  color: #2563eb;
+  font-size: 25px;
+  text-align: center;
+}
+input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+}
+button {
+  border: none;
+  padding: 10px;
+  margin: 3px;
+  border-radius: 7px;
+  color: white;
+  cursor: pointer;
+}
+.add { background: #2563eb; width: 100%; }
+.present { background: #16a34a; }
+.absent { background: #dc2626; }
+.reset { background: #555; }
+.student {
+  background: #f8fafc;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 9px;
+}
+.status { font-weight: bold; }
+#summary {
+  background: #e0e7ff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>Student Attendance Tracker</h1>
+  <p>Add students and mark their daily attendance.</p>
+
+  <input id="studentName" placeholder="Enter student name">
+  <button class="add" onclick="addStudent()">Add Student</button>
+
+  <div id="studentList"></div>
+
+  <div id="summary">
+    <b>Total Students:</b> <span id="total">0</span><br>
+    <b>Present:</b> <span id="presentCount">0</span><br>
+    <b>Absent:</b> <span id="absentCount">0</span><br>
+    <b>Attendance:</b> <span id="percentage">0%</span>
+  </div>
+
+  <button class="reset" onclick="resetAttendance()">
+    Reset Today's Attendance
+  </button>
+</div>
+
+<script>
+let students = [];
+
+try {
+  students = JSON.parse(
+    localStorage.getItem("attendanceStudents")
+  ) || [];
+} catch (error) {
+  students = [];
+}
+
+function saveData() {
+  localStorage.setItem(
+    "attendanceStudents",
+    JSON.stringify(students)
+  );
+}
+
+function addStudent() {
+  const input = document.getElementById("studentName");
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("Please enter a student name.");
+    return;
+  }
+
+  students.push({ name: name, status: "Not marked" });
+  input.value = "";
+  saveData();
+  displayStudents();
+}
+
+function markAttendance(index, status) {
+  students[index].status = status;
+  saveData();
+  displayStudents();
+}
+
+function displayStudents() {
+  const list = document.getElementById("studentList");
+  list.innerHTML = "";
+
+  students.forEach((student, index) => {
+    const div = document.createElement("div");
+    div.className = "student";
+
+    const name = document.createElement("b");
+    name.textContent = student.name;
+
+    const status = document.createElement("p");
+    status.className = "status";
+    status.textContent = "Status: " + student.status;
+
+    const present = document.createElement("button");
+    present.className = "present";
+    present.textContent = "Present";
+    present.onclick = () => markAttendance(index, "Present");
+
+    const absent = document.createElement("button");
+    absent.className = "absent";
+    absent.textContent = "Absent";
+    absent.onclick = () => markAttendance(index, "Absent");
+
+    div.append(name, status, present, absent);
+    list.appendChild(div);
+  });
+
+  const presentCount = students.filter(
+    s => s.status === "Present"
+  ).length;
+  const absentCount = students.filter(
+    s => s.status === "Absent"
+  ).length;
+
+  document.getElementById("total").textContent = students.length;
+  document.getElementById("presentCount").textContent = presentCount;
+  document.getElementById("absentCount").textContent = absentCount;
+
+  const marked = presentCount + absentCount;
+  const percentage = marked
+    ? Math.round(presentCount / marked * 100)
+    : 0;
+
+  document.getElementById("percentage").textContent =
+    percentage + "%";
+}
+
+function resetAttendance() {
+  if (!confirm("Reset attendance for all students?")) return;
+
+  students.forEach(student => {
+    student.status = "Not marked";
+  });
+
+  saveData();
+  displayStudents();
+}
+
+displayStudents();
+</script>
+</body>
+</html>
